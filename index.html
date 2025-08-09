@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Weather Forecast – Vanilla JS</title>
+    <meta name="description" content="Current weather and 5‑day forecast with city search, geolocation, recent cities, and alerts." />
+    <link rel="canonical" href="/vanilla/" />
+
+    <!-- Tailwind CDN (for the standalone HTML version) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Custom styles for this vanilla implementation -->
+    <link rel="stylesheet" href="./styles.css" />
+
+    <!-- Social cards -->
+    <meta property="og:title" content="Weather Forecast – Vanilla JS" />
+    <meta property="og:description" content="Search by city or use your location. See today's conditions and a 5‑day forecast." />
+    <meta property="og:type" content="website" />
+  </head>
+  <body class="min-h-screen bg-neutral-50 text-neutral-900">
+    <header class="sticky top-0 z-40 border-b bg-white/80 backdrop-blur">
+      <div class="mx-auto max-w-5xl px-4 py-4 flex items-center justify-between">
+        <h1 class="text-xl sm:text-2xl font-bold">Weather Forecast App</h1>
+        <nav aria-label="Primary navigation" class="hidden sm:block">
+          <span class="text-sm text-neutral-500">Vanilla JS • Tailwind</span>
+        </nav>
+      </div>
+    </header>
+
+    <main class="mx-auto max-w-5xl px-4 py-6">
+      <!-- Search / Actions -->
+      <section aria-labelledby="search-heading" class="mb-6">
+        <h2 id="search-heading" class="sr-only">Search</h2>
+        <div class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+          <div class="flex-1 flex gap-2">
+            <div class="relative flex-1">
+              <input id="city-input" type="text" placeholder="Search city (e.g., London)"
+                     class="w-full h-11 rounded-md border border-neutral-200 bg-white px-3 pr-10 text-sm outline-none focus:ring-2 focus:ring-neutral-800"
+                     aria-label="Search city" />
+              <svg class="absolute right-3 top-1/2 -translate-y-1/2 opacity-60" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+            </div>
+            <button id="search-btn" class="inline-flex items-center justify-center gap-2 h-11 px-4 rounded-md bg-neutral-900 text-white hover:bg-neutral-800 disabled:opacity-50">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11a8 8 0 0 1 14-4M21 21l-6-6"></path><path d="M3 11a8 8 0 0 0 8 8"></path></svg>
+              Search
+            </button>
+          </div>
+          <div class="flex gap-2">
+            <button id="geo-btn" class="inline-flex items-center justify-center gap-2 h-11 px-4 rounded-md bg-neutral-100 hover:bg-neutral-200 border border-neutral-200">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="10" r="3"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="m4.93 4.93 1.41 1.41"></path><path d="m17.66 17.66 1.41 1.41"></path><path d="M2 10h2"></path><path d="M20 10h2"></path></svg>
+              Use my location
+            </button>
+
+            <div class="relative">
+              <button id="recents-btn" class="inline-flex items-center justify-center gap-2 h-11 px-4 rounded-md border border-neutral-200 bg-white hover:bg-neutral-100 disabled:opacity-50" disabled>
+                Recent
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg>
+              </button>
+              <div id="recents-menu" class="hidden absolute right-0 mt-2 w-64 z-50 rounded-md border bg-white shadow">
+                <ul id="recents-list" class="py-1"></ul>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p id="error-line" class="mt-2 text-sm text-red-600 hidden"></p>
+      </section>
+
+      <!-- Today -->
+      <section aria-labelledby="today-heading" class="grid gap-6 md:grid-cols-3">
+        <article class="md:col-span-2">
+          <div class="rounded-lg border bg-white">
+            <div class="p-4 border-b flex items-center justify-between">
+              <h2 id="today-heading" class="text-lg font-semibold">Today – <span id="location-label">—</span></h2>
+              <div class="flex items-center gap-2">
+                <span class="text-sm text-neutral-500">Unit</span>
+                <button id="unit-toggle" class="h-8 px-3 rounded-md border bg-white hover:bg-neutral-100 text-sm">°C</button>
+              </div>
+            </div>
+            <div class="p-4">
+              <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div class="flex items-center gap-3">
+                  <div class="p-3 rounded-md bg-neutral-100" id="today-icon" aria-hidden="true">
+                    <!-- icon injected by JS -->
+                  </div>
+                  <div>
+                    <div id="today-temp" class="text-3xl font-bold">—</div>
+                    <div id="today-label" class="text-sm text-neutral-500">—</div>
+                  </div>
+                </div>
+                <div class="grid grid-cols-3 gap-4 text-sm">
+                  <div class="flex items-center gap-2">
+                    <svg class="opacity-60" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 14a4 4 0 1 1-8 0V5a4 4 0 1 1 8 0z"></path><path d="M8 2v10"></path><path d="M8 16h4"></path></svg>
+                    <span id="today-max">Max: —</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <svg class="opacity-60" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10"></path><path d="M12 20a4 4 0 0 0 4-4"></path><path d="M12 4V2"></path></svg>
+                    <span id="today-wind">Wind: —</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <svg class="opacity-60" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 16.5a5 5 0 0 1 7-4.5 3 3 0 0 0 5 0 5 5 0 1 1 2 9H3"></path></svg>
+                    <span id="today-humidity">Humidity: —</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+        <aside>
+          <div class="rounded-lg border bg-white">
+            <div class="p-4 border-b">
+              <h3 class="text-base font-semibold">Tips</h3>
+            </div>
+            <div class="p-4">
+              <ul class="space-y-2 text-sm text-neutral-600">
+                <li>Use your location for instant local weather.</li>
+                <li>Save time with the Recent cities menu.</li>
+                <li>Toggle °C/°F for today using the Unit button.</li>
+              </ul>
+            </div>
+          </div>
+        </aside>
+      </section>
+
+      <!-- Forecast -->
+      <section aria-labelledby="forecast-heading" class="mt-8">
+        <h2 id="forecast-heading" class="text-xl font-semibold mb-4">5‑Day Forecast</h2>
+        <div id="forecast-grid" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-5"></div>
+      </section>
+    </main>
+
+    <footer class="mt-10 py-8 border-t">
+      <div class="mx-auto max-w-5xl px-4 text-center text-sm text-neutral-500">
+        Data by Open‑Meteo. Built with Tailwind CSS.
+      </div>
+    </footer>
+
+    <!-- Toast root -->
+    <div id="toast-root" class="fixed top-4 right-4 z-[9999] space-y-2"></div>
+
+    <!-- Lucide for icons (used in forecast cards) -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="./app.js" defer></script>
+  </body>
+</html>

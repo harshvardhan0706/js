@@ -1,0 +1,40 @@
+/* Custom CSS for the Vanilla JS Weather App */
+
+/* Simple rainy background effect applied when body has class 'rainy' */
+body.rainy {
+  background-image: linear-gradient(180deg, hsl(210 20% 96%), hsl(210 28% 90%));
+}
+
+/* Dropdown menu tweaks (ensure not transparent) */
+#recents-menu {
+  background: #ffffff;
+}
+
+/* Toast styles */
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 220px;
+  max-width: 320px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+  color: #111827; /* neutral-900 */
+  background: #ffffff;
+  border: 1px solid #e5e7eb; /* neutral-200 */
+  animation: slide-in 200ms ease-out;
+}
+.toast.error { border-color: #fecaca; background: #fff1f2; color: #7f1d1d; }
+.toast.warning { border-color: #fde68a; background: #fffbeb; color: #78350f; }
+.toast.info { border-color: #bae6fd; background: #eff6ff; color: #082f49; }
+
+@keyframes slide-in {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-out { animation: fade-out 300ms ease-in forwards; }
+@keyframes fade-out {
+  to { opacity: 0; transform: translateY(-6px); }
+}
